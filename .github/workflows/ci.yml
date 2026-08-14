@@ -1,0 +1,29 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: pip install maturin pytest numpy
+      - run: pip install "pora-replication @ git+https://github.com/chenggma/pora-replication"
+      - run: maturin develop --release
+      - run: python -m pytest tests/ -v
+      - name: benchmark (informational)
+        run: python scripts/bench.py --scenarios 3 --repeats 3

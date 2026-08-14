@@ -1,0 +1,26 @@
+[build-system]
+requires = ["maturin>=1.5,<2"]
+build-backend = "maturin"
+
+[project]
+name = "pora-rs"
+version = "0.1.0"
+description = "Rust rewrite of the PORA collision-risk metric hot loop, differential-tested against the Python reference"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8",
+    # The Python reference implementation this crate is differential-tested
+    # against.
+    "pora-replication @ git+https://github.com/chenggma/pora-replication",
+]
+
+[tool.maturin]
+module-name = "pora_rs"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
