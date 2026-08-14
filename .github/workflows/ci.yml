@@ -23,7 +23,7 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
       - run: pip install maturin pytest numpy
       - run: pip install "pora-replication @ git+https://github.com/chenggma/pora-replication"
-      - run: maturin develop --release
+      - run: pip install .
       - run: python -m pytest tests/ -v
       - name: benchmark (informational)
         run: python scripts/bench.py --scenarios 3 --repeats 3
