@@ -23,6 +23,11 @@ import numpy as np
 
 import pora_rs
 
+try:
+    import pora_cpp
+except ImportError:
+    pora_cpp = None
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tests.test_parity import python_pora_score  # noqa: E402
 
@@ -72,8 +77,10 @@ def main():
         "scenarios per case; scalars asserted equal (rtol 1e-12) every call",
         "- python reference: pora-replication (numpy-vectorized), same "
         "wiring as risk-metric-bench `pora_score`\n",
-        "| case | python | rust | speedup | per call (rust) |",
-        "|---|---|---|---|---|",
+        ("| case | python | rust | c++ | rust speedup | c++ speedup |"
+         if pora_cpp else
+         "| case | python | rust | speedup | per call (rust) |"),
+        ("|---|---|---|---|---|---|" if pora_cpp else "|---|---|---|---|---|"),
     ]
     for label, n_foes, extent, horizon, dt in CASES:
         r = random.Random(hash(label) & 0xFFFF)
@@ -92,9 +99,21 @@ def main():
         np.testing.assert_allclose(out_rs, out_py, rtol=1e-12, atol=1e-14)
 
         per_call_ms = 1000 * t_rs / len(scenarios)
-        row = (f"| {label} | {t_py / len(scenarios) * 1000:.1f} ms "
-               f"| {per_call_ms:.2f} ms | **{t_py / t_rs:.1f}x** "
-               f"| {per_call_ms:.2f} ms |")
+        if pora_cpp:
+            def cpp_fn(ego, foes, extent=extent, horizon=horizon, dt=dt):
+                return pora_cpp.pora_score(ego, foes, horizon_s=horizon,
+                                           dt=dt, extent=extent)
+
+            t_cpp, out_cpp = time_fn(cpp_fn, scenarios, args.repeats)
+            np.testing.assert_allclose(out_cpp, out_py, rtol=1e-12, atol=1e-14)
+            row = (f"| {label} | {t_py / len(scenarios) * 1000:.1f} ms "
+                   f"| {per_call_ms:.2f} ms "
+                   f"| {1000 * t_cpp / len(scenarios):.2f} ms "
+                   f"| **{t_py / t_rs:.1f}x** | {t_py / t_cpp:.1f}x |")
+        else:
+            row = (f"| {label} | {t_py / len(scenarios) * 1000:.1f} ms "
+                   f"| {per_call_ms:.2f} ms | **{t_py / t_rs:.1f}x** "
+                   f"| {per_call_ms:.2f} ms |")
         lines.append(row)
         print(row)
 

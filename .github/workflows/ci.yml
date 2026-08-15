@@ -24,6 +24,7 @@ jobs:
       - run: pip install maturin pytest numpy
       - run: pip install "pora-replication @ git+https://github.com/chenggma/pora-replication"
       - run: pip install .
+      - run: pip install ./cpp
       - run: python -m pytest tests/ -v
       - name: benchmark (informational)
         run: python scripts/bench.py --scenarios 3 --repeats 3

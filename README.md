@@ -7,7 +7,7 @@ bindings — **differential-tested against the Python reference
 implementation** ([pora-replication](https://github.com/chenggma/pora-replication))
 on randomized inputs at 1e-12 relative tolerance.
 
-**6.5–17.6x faster** than the numpy-vectorized reference on the
+**7.0–16.2x faster** than the numpy-vectorized reference on the
 end-to-end scoring path (see [docs/benchmarks.md](docs/benchmarks.md);
 Apple M-series, parity asserted on every benchmark call).
 
@@ -15,6 +15,23 @@ Apple M-series, parity asserted on every benchmark call).
 > [arXiv:2501.16480](https://arxiv.org/abs/2501.16480). This repo, like
 > `pora-replication`, is unofficial and independent; the metric semantics
 > replicated here are those of that Python package, gaps and all.
+
+## C++ comparison implementation
+
+`cpp/` holds a single-threaded C++17 implementation of the same hot loop,
+bound with pybind11 and held to the same bar: the differential suite
+asserts it against both the Python reference and the Rust extension at
+1e-12 on randomized scenarios.
+
+```bash
+pip install ./cpp && python -m pytest tests/
+```
+
+On the benchmark cases it lands at **3.8–6.2x** over numpy, against
+7.0–16.2x for the Rust extension. The gap is parallelism, not language:
+the Rust path fans grid rows out with rayon, the C++ is single-threaded
+by design so the comparison isolates per-core codegen. See
+[docs/benchmarks.md](docs/benchmarks.md) for the three-way table.
 
 ## Why
 
